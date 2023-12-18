@@ -1,3 +1,9 @@
+# Project
+The goal of this project is to create a simplified command-line-based bank management system using Python.
+The system will be designed using object-oriented programming principles and will utilize a SQLite database for data storage.
+This project will provide you with hands-on experience in building and managing a banking application.
+
+
 # BankManagementSystemPython
 A simple Bank Management System with all the basic functions built in Python, sotres data in SQLite.
 
