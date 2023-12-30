@@ -1,5 +1,5 @@
 from bank import BankManagementSystem, BankAccounts
-from ui_func import get_a_prompt_loop
+from validations import get_a_prompt_loop
 
 
 def show_menu(menu):
@@ -26,7 +26,8 @@ main_menu = {"1": "Create a New Bank Account",
              "5": "Close your Bank Account",
              "0": "Quit"}
 
-bm = BankManagementSystem('db.db')
+database_path = 'db.db'
+bm = BankManagementSystem(database_path)
 
 while True:
     choice = user_select_from_menu(main_menu)
@@ -40,7 +41,7 @@ while True:
         account_address = get_a_prompt_loop("Please enter your address: ", 2)
         account_phone_number = get_a_prompt_loop("Please enter your phone num: ", 3)
         account_birth_date = get_a_prompt_loop("Please enter your birth date (YYYY-MM-DD):", 5)
-        ba = BankAccounts('db.db', account_holder_name, account_email, account_address, account_phone_number,
+        ba = BankAccounts(database_path, account_holder_name, account_email, account_address, account_phone_number,
                           account_birth_date)
         bm.add_new_account(ba.account_number)
         print(str(ba))
@@ -52,20 +53,20 @@ while True:
             if choice == '2':
                 amount = get_a_prompt_loop("Enter the amount you would like to deposit: ", 1)
                 if bm.deposit(account_number, account_pin_code, amount):
-                    print(f"you have successfully deposited {amount} into your account")
+                    print(f"you have successfully deposited money into your account")
                 else:
                     print("The action couldn't be completed.")
             elif choice == '3':
                 amount = get_a_prompt_loop("Enter the amount you would like to withdraw: ", 1)
                 if bm.withdraw(account_number, account_pin_code, amount):
-                    print(f"you have successfully withdrawn {amount} from your account")
+                    print(f"you have successfully withdrawn money from your account")
                 else:
-                    print("You don't have enough money to withdraw.")
+                    print("The action couldn't be completed.")
             elif choice == '4':
-                if bm.get_account_balance(account_number, account_pin_code):
+                if bm.get_account_balance(account_number, account_pin_code) >= 0:
                     print("Your Current Balance is: ", bm.get_account_balance(account_number, account_pin_code))
                 else:
-                    print("You don't have money...")
+                    print("The action couldn't be completed")
             elif choice == '5':
                 if bm.delete_account(account_number, account_pin_code):
                     print("Your account was deleted.")
