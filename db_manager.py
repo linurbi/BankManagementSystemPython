@@ -25,3 +25,4 @@ class DbManager:
     def db_commit(self):
         db = sqlite3.connect(self.db_path)
         db.commit()
+
