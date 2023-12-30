@@ -2,31 +2,20 @@ import re
 from datetime import datetime as dt
 
 
-# UI ELEMENTS
-# TODO do I need them?
 def validate_int_params(account_number, account_pin_code):
     if isinstance(account_number, int) and isinstance(account_pin_code, int):
         return True
     return False
 
 
-def validate_float_params(amount):
-    if isinstance(amount, float):
-        return True
-    else:
-        raise ValueError("Invalid input. Amount should be float.")
-
-
 def validate_params(account_holder_name, account_email, account_address, account_phone_number,
                     account_birth_date):
     if (isinstance(account_holder_name, str) and isinstance(account_address, str)
-            and is_valid_email(account_email) and isinstance(account_birth_date, dt)
+            and is_valid_email(account_email) and is_valid_birth_date(account_birth_date)
             and is_valid_phone_number(account_phone_number)):
         return True
     return False
 
-
-# TODO complete the function
 
 def is_valid_email(email):
     """ Checks if email is a valid email.
@@ -38,10 +27,17 @@ def is_valid_email(email):
     pattern = r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$'
 
     # Use re.match to check if the email matches the pattern
-    match = re.match(pattern, email)
-    if match is not None:
-        return email
-    return False
+    try:
+        # Use re.match to check if the phone_number matches the pattern
+        match = re.match(pattern, email)
+        if match is not None:
+            return email
+        else:
+            raise ValueError("Invalid email format. Please enter a valid email account.")
+    except ValueError as ve:
+        # Handle any other ValueError raised in the try block
+        print(ve)
+        return False
 
 
 def is_valid_phone_number(phone_number):
@@ -51,13 +47,22 @@ def is_valid_phone_number(phone_number):
         Returns:
             True if the phone number is a valid mobile phone number, False otherwise.
     """
-    pattern = r'^\+?[1-9]\d{9,14}$'
+
+    pattern = r'^05\d{8}$'
 
     # Use re.match to check if the phone_number matches the pattern
-    match = re.match(pattern, phone_number)
-    if match is not None:
-        return phone_number
-    return False
+
+    try:
+        # Use re.match to check if the phone_number matches the pattern
+        match = re.match(pattern, phone_number)
+        if match is not None:
+            return phone_number
+        else:
+            raise ValueError("Invalid phone number format. Please enter a phone number starts with '05'.")
+    except ValueError as ve:
+        # Handle any other ValueError raised in the try block
+        print(ve)
+        return False
 
 
 def is_valid_birth_date(birthdate):
@@ -66,8 +71,9 @@ def is_valid_birth_date(birthdate):
         current_date = dt.now()
 
         # Additional validation to check if the birthdate is within a reasonable range
-        if birth_date > current_date or birth_date.year < 1900:
+        if birth_date > current_date or birth_date.year < 1900 or birth_date.year > (current_date.year - 17):
             print("Invalid birth date. Please enter a realistic birth date.")
+            return False
         else:
             return birth_date
 
@@ -101,5 +107,6 @@ def get_a_prompt_loop(prompt, prompt_type):
     validate_input_to_get = None
     while not validate_input_to_get:
         validate_input_to_get = get_prompt_from_user(prompt, prompt_type)
+        if not validate_input_to_get and prompt_type in (0, 1, 2):
+            print("Invalid input. Please try again")
     return validate_input_to_get
-
