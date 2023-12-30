@@ -2,7 +2,7 @@ from db_manager import DbManager
 import random
 from datetime import datetime as dt
 import sqlite3
-from ui_func import validate_int_params, validate_float_params, is_valid_phone_number, is_valid_email
+from validations import validate_int_params, is_valid_phone_number, is_valid_email
 
 
 class BankAccounts:
@@ -71,6 +71,7 @@ class BankAccounts:
                                 VALUES (?,?,?,?,?,?,?)""", (account_number, account_pin_code, account_holder_name,
                                                             account_email, account_address, account_phone_number,
                                                             account_birth_date))
+
         return account_number
 
 
@@ -138,7 +139,7 @@ class BankManagementSystem:
         self.db.execute_query("""INSERT INTO fact_transactions (account_number,
                                     transaction_type, transaction_date, account_balance)
                                         VALUES (?,?,?,?)""", (account_number,
-                                                            0, dt.now(), 0))
+                                                              0, dt.now(), 0))
         return True
 
     def update_balance(self, account_number, transaction_type, amount):
@@ -155,15 +156,13 @@ class BankManagementSystem:
         Returns:
             The balance of the bank account.
         """
-        if validate_int_params(account_number, account_pin_code):
-            if self.account_lookup(account_number, account_pin_code):
-                account_balance = self.db.execute_query("""SELECT account_balance FROM fact_transactions 
-                WHERE account_number = ? GROUP BY account_number HAVING transaction_date = max(transaction_date) """,
-                                                        (account_number,), False,
-                                                        False, True)
-                return account_balance[0]
-            return False
-        return False
+        if self.account_lookup(account_number, account_pin_code):
+            account_balance = self.db.execute_query("""SELECT account_balance FROM fact_transactions 
+            WHERE account_number = ? GROUP BY account_number HAVING transaction_date = max(transaction_date) """,
+                                                    (account_number,), False,
+                                                    False, True)
+            return account_balance[0]
+        return -1
 
     def deposit(self, account_number, account_pin_code, amount):
         """Deposits money into a bank account.
@@ -173,14 +172,19 @@ class BankManagementSystem:
             amount: The amount of money to deposit.
         """
         self.db.db_commit()
-        if validate_int_params(account_number, account_pin_code) and validate_float_params(amount):
-            if self.account_lookup(account_number, account_pin_code):
+        try:
+            if self.account_lookup(account_number, account_pin_code) and amount >= 0:
                 update_amount = self.get_account_balance(account_number, account_pin_code) + amount
                 self.db.db_commit()
                 self.update_balance(account_number, 1, update_amount)
                 return True
+            else:
+                raise ValueError("Invalid Account details or Invalid Amount.")
+
+        except ValueError as ve:
+            # Handle any other ValueError raised in the try block
+            print(ve)
             return False
-        return False
 
     def withdraw(self, account_number, account_pin_code, amount):
         """Withdraws money from a bank account.
@@ -189,15 +193,20 @@ class BankManagementSystem:
             account_pin_code: Pin code of the customer.
             amount: The amount of money to withdraw.
         """
-        if validate_int_params(account_number, account_pin_code) and validate_float_params(amount):
-            if self.account_lookup(account_number, account_pin_code):
+        try:
+            if self.account_lookup(account_number, account_pin_code) and amount > 0:
                 update_amount = self.get_account_balance(account_number, account_pin_code) - float(amount)
                 if update_amount >= 0:
                     self.update_balance(account_number, 2, update_amount)
                     return True
-                return False
+                else:
+                    return False
+            else:
+                raise ValueError("Invalid Account details or Invalid Amount.")
+        except ValueError as ve:
+            # Handle any other ValueError raised in the try block
+            print(ve)
             return False
-        return False
 
     def account_lookup(self, account_number, account_pin_code):
         """Checks if account exists.
@@ -207,11 +216,12 @@ class BankManagementSystem:
                 Returns:
                     The balance of the bank account.True if exists, False otherwise
                 """
-        result = self.db.execute_query(
-            """SELECT * FROM dim_accounts
-            WHERE account_number = ? and account_pin_code = ?""",
-            (account_number, account_pin_code), True)
-        self.db.db_commit()
+        if validate_int_params(account_number, account_pin_code):
+            result = self.db.execute_query(
+                """SELECT * FROM dim_accounts
+                WHERE account_number = ? and account_pin_code = ?""",
+                (account_number, account_pin_code), True)
+            self.db.db_commit()
         if result:
             return True
         return False
@@ -223,11 +233,9 @@ class BankManagementSystem:
             account_number: The account number of the account holder.
             account_pin_code: Pin code of the customer.
         """
-        if validate_int_params(account_number, account_pin_code):
-            if self.account_lookup(account_number, account_pin_code):
-                self.db.execute_query("""DELETE from dim_accounts
-                                    WHERE account_number = ? and account_pin_code = ?""",
-                                      (account_number, account_pin_code))
-                return True
-            return False
+        if self.account_lookup(account_number, account_pin_code):
+            self.db.execute_query("""DELETE from dim_accounts
+                                WHERE account_number = ? and account_pin_code = ?""",
+                                  (account_number, account_pin_code))
+            return True
         return False
